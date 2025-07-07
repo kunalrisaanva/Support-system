@@ -70,7 +70,7 @@ function PublicLayout() {
 
 function AppContent() {
   const { isAuthenticated, isLoading } = useAuth();
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
 
   // Show loading screen while checking authentication
   if (isLoading) {
@@ -97,7 +97,8 @@ function AppContent() {
 
   // If authenticated and trying to access public route, redirect to dashboard
   if (isAuthenticated && isPublicRoute) {
-    return <AuthenticatedLayout />;
+    setLocation("/");
+    return null;
   }
 
   // Render appropriate layout based on authentication

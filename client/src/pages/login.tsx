@@ -150,10 +150,8 @@ export default function Login() {
                     Remember me
                   </Label>
                 </div>
-                <Link href="/forgot-password">
-                  <a className="text-sm text-primary hover:text-primary/80">
-                    Forgot your password?
-                  </a>
+                <Link href="/forgot-password" className="text-sm text-primary hover:text-primary/80">
+                  Forgot your password?
                 </Link>
               </div>
 
@@ -169,10 +167,8 @@ export default function Login() {
             <div className="mt-6 text-center">
               <p className="text-sm text-gray-600 dark:text-gray-400">
                 Don't have an account?{" "}
-                <Link href="/register">
-                  <a className="text-primary hover:text-primary/80 font-medium">
-                    Sign up
-                  </a>
+                <Link href="/register" className="text-primary hover:text-primary/80 font-medium">
+                  Sign up
                 </Link>
               </p>
             </div>
