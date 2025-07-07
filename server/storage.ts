@@ -1,4 +1,6 @@
 import { users, activities, type User, type InsertUser, type UpdateUser, type Activity, type InsertActivity } from "@shared/schema";
+import { db } from "./db";
+import { eq, desc, count, and } from "drizzle-orm";
 
 export interface IStorage {
   // User operations
@@ -144,4 +146,75 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+// DatabaseStorage implementation
+export class DatabaseStorage implements IStorage {
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user || undefined;
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values(insertUser)
+      .returning();
+    return user;
+  }
+
+  async updateUser(id: number, updates: UpdateUser): Promise<User | undefined> {
+    const [user] = await db
+      .update(users)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    return user || undefined;
+  }
+
+  async updateUserPassword(id: number, newPassword: string): Promise<User | undefined> {
+    const [user] = await db
+      .update(users)
+      .set({ password: newPassword, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    return user || undefined;
+  }
+
+  async getUserActivities(userId: number, page: number = 1, limit: number = 10): Promise<{ activities: Activity[], total: number }> {
+    const offset = (page - 1) * limit;
+    
+    // Get activities for the user
+    const userActivities = await db
+      .select()
+      .from(activities)
+      .where(eq(activities.userId, userId))
+      .orderBy(desc(activities.createdAt))
+      .limit(limit)
+      .offset(offset);
+
+    // Get total count
+    const [{ totalCount }] = await db
+      .select({ totalCount: count() })
+      .from(activities)
+      .where(eq(activities.userId, userId));
+
+    return { 
+      activities: userActivities, 
+      total: totalCount 
+    };
+  }
+
+  async createActivity(activity: InsertActivity): Promise<Activity> {
+    const [newActivity] = await db
+      .insert(activities)
+      .values(activity)
+      .returning();
+    return newActivity;
+  }
+}
+
+export const storage = new DatabaseStorage();

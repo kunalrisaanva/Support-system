@@ -23,9 +23,10 @@ SupportHub is a comprehensive customer support platform built with a modern full
 
 ### Database Layer
 - **ORM**: Drizzle ORM for type-safe database operations
-- **Database**: PostgreSQL (configured via Neon serverless)
-- **Schema**: Shared schema definitions between client and server
+- **Database**: PostgreSQL with persistent storage
+- **Schema**: Shared schema definitions with proper relations between users and activities
 - **Migrations**: Drizzle Kit for database schema management
+- **Storage**: DatabaseStorage class implementing IStorage interface for all CRUD operations
 
 ## Key Components
 
@@ -118,6 +119,12 @@ Changelog:
   - Implemented proper routing with authenticated and public layouts
   - Added comprehensive styling with dark mode support
   - Created mobile-responsive design across all pages
+- July 07, 2025: Database integration completed
+  - Migrated from in-memory storage to PostgreSQL database
+  - Created DatabaseStorage class implementing IStorage interface
+  - Added proper database relations between users and activities
+  - Successfully seeded database with initial demo data
+  - All API endpoints now use persistent PostgreSQL storage
 
 ## User Preferences
 
