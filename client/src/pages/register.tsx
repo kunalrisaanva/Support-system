@@ -8,8 +8,9 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { HelpCircle, Eye, EyeOff } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const registerSchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters"),
@@ -31,6 +32,8 @@ type RegisterData = z.infer<typeof registerSchema>;
 export default function Register() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [, setLocation] = useLocation();
+  const { toast } = useToast();
   
   const form = useForm<RegisterData>({
     resolver: zodResolver(registerSchema),
@@ -45,9 +48,23 @@ export default function Register() {
     },
   });
 
-  const onSubmit = (data: RegisterData) => {
-    console.log("Register data:", data);
-    // Handle registration logic here
+  const onSubmit = async (data: RegisterData) => {
+    try {
+      // Demo registration - in real app, this would call an API
+      toast({
+        title: "Account created successfully!",
+        description: "You can now sign in with your credentials.",
+      });
+      
+      // Navigate to login page
+      setLocation("/login");
+    } catch (error) {
+      toast({
+        title: "Registration failed",
+        description: "An error occurred during registration. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -219,19 +236,16 @@ export default function Register() {
                     form.setValue("agreeToTerms", checked as boolean)
                   }
                 />
-                <Label 
-                  htmlFor="agreeToTerms" 
-                  className="ml-2 text-sm text-gray-600 dark:text-gray-400"
-                >
+                <div className="ml-2 text-sm text-gray-600 dark:text-gray-400">
                   I agree to the{" "}
-                  <a href="#" className="text-primary hover:text-primary/80">
+                  <span className="text-primary hover:text-primary/80 cursor-pointer">
                     Terms of Service
-                  </a>{" "}
+                  </span>{" "}
                   and{" "}
-                  <a href="#" className="text-primary hover:text-primary/80">
+                  <span className="text-primary hover:text-primary/80 cursor-pointer">
                     Privacy Policy
-                  </a>
-                </Label>
+                  </span>
+                </div>
               </div>
               {form.formState.errors.agreeToTerms && (
                 <p className="text-sm text-red-500">

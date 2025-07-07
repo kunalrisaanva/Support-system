@@ -5,8 +5,30 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
+import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
 
 export default function Settings() {
+  const { toast } = useToast();
+  const [autoAssign, setAutoAssign] = useState(true);
+  const [emailNotifications, setEmailNotifications] = useState(true);
+  const [twoFactorAuth, setTwoFactorAuth] = useState(false);
+  const [loginAlerts, setLoginAlerts] = useState(true);
+
+  const handleSaveSettings = () => {
+    toast({
+      title: "Settings saved",
+      description: "Your application settings have been updated successfully.",
+    });
+  };
+
+  const handleUpdateSecurity = () => {
+    toast({
+      title: "Security updated",
+      description: "Your security settings have been updated successfully.",
+    });
+  };
+
   return (
     <div className="flex-1 overflow-auto">
       <Header title="Settings" subtitle="Configure your application settings" />
@@ -35,7 +57,10 @@ export default function Settings() {
                 <h4 className="text-sm font-medium">Auto-assign tickets</h4>
                 <p className="text-sm text-muted-foreground">Automatically assign new tickets to available agents</p>
               </div>
-              <Switch defaultChecked />
+              <Switch 
+                checked={autoAssign}
+                onCheckedChange={setAutoAssign}
+              />
             </div>
             
             <div className="flex items-center justify-between">
@@ -43,11 +68,14 @@ export default function Settings() {
                 <h4 className="text-sm font-medium">Email notifications</h4>
                 <p className="text-sm text-muted-foreground">Send email notifications for ticket updates</p>
               </div>
-              <Switch defaultChecked />
+              <Switch 
+                checked={emailNotifications}
+                onCheckedChange={setEmailNotifications}
+              />
             </div>
             
             <div className="flex justify-end">
-              <Button>Save Settings</Button>
+              <Button onClick={handleSaveSettings}>Save Settings</Button>
             </div>
           </CardContent>
         </Card>
@@ -62,7 +90,10 @@ export default function Settings() {
                 <h4 className="text-sm font-medium">Two-factor authentication</h4>
                 <p className="text-sm text-muted-foreground">Add an extra layer of security to your account</p>
               </div>
-              <Switch />
+              <Switch 
+                checked={twoFactorAuth}
+                onCheckedChange={setTwoFactorAuth}
+              />
             </div>
             
             <div className="flex items-center justify-between">
@@ -70,11 +101,14 @@ export default function Settings() {
                 <h4 className="text-sm font-medium">Login alerts</h4>
                 <p className="text-sm text-muted-foreground">Get notified when someone logs into your account</p>
               </div>
-              <Switch defaultChecked />
+              <Switch 
+                checked={loginAlerts}
+                onCheckedChange={setLoginAlerts}
+              />
             </div>
             
             <div className="flex justify-end">
-              <Button>Update Security</Button>
+              <Button onClick={handleUpdateSecurity}>Update Security</Button>
             </div>
           </CardContent>
         </Card>

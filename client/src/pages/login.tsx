@@ -7,8 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { HelpCircle, Eye, EyeOff } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -20,6 +21,8 @@ type LoginData = z.infer<typeof loginSchema>;
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
+  const [, setLocation] = useLocation();
+  const { toast } = useToast();
   
   const form = useForm<LoginData>({
     resolver: zodResolver(loginSchema),
@@ -30,9 +33,35 @@ export default function Login() {
     },
   });
 
-  const onSubmit = (data: LoginData) => {
-    console.log("Login data:", data);
-    // Handle login logic here
+  const onSubmit = async (data: LoginData) => {
+    try {
+      // Demo login validation
+      if (data.email === "sarah.johnson@company.com" && data.password === "password123") {
+        toast({
+          title: "Login successful",
+          description: "Welcome back to SupportHub!",
+        });
+        
+        // Store auth state in localStorage (demo purposes)
+        localStorage.setItem("isAuthenticated", "true");
+        localStorage.setItem("userEmail", data.email);
+        
+        // Navigate to dashboard
+        setLocation("/");
+      } else {
+        toast({
+          title: "Login failed",
+          description: "Invalid email or password. Try the demo credentials.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An error occurred during login. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (

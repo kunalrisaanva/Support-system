@@ -1,12 +1,15 @@
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 import { 
   LayoutDashboard, 
   Ticket, 
   Users, 
   Settings, 
   User,
-  HelpCircle
+  HelpCircle,
+  LogOut
 } from "lucide-react";
 
 const navigation = [
@@ -17,8 +20,23 @@ const navigation = [
   { name: "Profile", href: "/profile", icon: User },
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+  onLogout?: () => void;
+}
+
+export function Sidebar({ onLogout }: SidebarProps) {
   const [location] = useLocation();
+  const { toast } = useToast();
+
+  const handleLogout = () => {
+    if (onLogout) {
+      onLogout();
+      toast({
+        title: "Logged out",
+        description: "You have been successfully logged out.",
+      });
+    }
+  };
 
   return (
     <div className="w-72 bg-white dark:bg-gray-800 shadow-lg flex flex-col border-r border-gray-200 dark:border-gray-700">
@@ -61,7 +79,7 @@ export function Sidebar() {
 
       {/* User Info */}
       <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-3 mb-3">
           <img 
             src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-5.jpg" 
             alt="User avatar" 
@@ -72,6 +90,17 @@ export function Sidebar() {
             <p className="text-xs text-gray-500 dark:text-gray-400">Support Agent</p>
           </div>
         </div>
+        {onLogout && (
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={handleLogout}
+            className="w-full justify-start text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+          >
+            <LogOut className="w-4 h-4 mr-2" />
+            Sign Out
+          </Button>
+        )}
       </div>
     </div>
   );
