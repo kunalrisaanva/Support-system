@@ -5,7 +5,9 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/ui/theme-provider";
+import { Button } from "@/components/ui/button";
 import { Sidebar } from "@/components/layout/sidebar";
+import { Menu, HelpCircle } from "lucide-react";
 import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/dashboard";
 import Tickets from "@/pages/tickets";
@@ -41,18 +43,54 @@ function useAuth() {
 
 function AuthenticatedLayout() {
   const { logout } = useAuth();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
-      <Sidebar onLogout={logout} />
-      <Switch>
-        <Route path="/" component={Dashboard} />
-        <Route path="/tickets" component={Tickets} />
-        <Route path="/customers" component={Customers} />
-        <Route path="/settings" component={Settings} />
-        <Route path="/profile" component={Profile} />
-        <Route component={NotFound} />
-      </Switch>
+      <Sidebar 
+        onLogout={logout} 
+        isMobileOpen={isMobileMenuOpen}
+        onMobileToggle={toggleMobileMenu}
+      />
+      
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Mobile Header */}
+        <header className="lg:hidden bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <button
+                className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
+                onClick={toggleMobileMenu}
+              >
+                <Menu className="w-5 h-5" />
+              </button>
+              <div className="flex items-center space-x-2">
+                <div className="w-6 h-6 bg-primary rounded-md flex items-center justify-center">
+                  <HelpCircle className="w-4 h-4 text-white" />
+                </div>
+                <span className="font-semibold text-gray-900 dark:text-white">SupportHub</span>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {/* Page Content */}
+        <main className="flex-1 overflow-auto">
+          <Switch>
+            <Route path="/" component={Dashboard} />
+            <Route path="/tickets" component={Tickets} />
+            <Route path="/customers" component={Customers} />
+            <Route path="/settings" component={Settings} />
+            <Route path="/profile" component={Profile} />
+            <Route component={NotFound} />
+          </Switch>
+        </main>
+      </div>
     </div>
   );
 }
