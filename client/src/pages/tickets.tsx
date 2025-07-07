@@ -36,9 +36,17 @@ export default function Tickets() {
   const { data: tickets = [], isLoading, error } = useQuery({
     queryKey: ["/api/tickets"],
     queryFn: async () => {
-      const response = await apiRequest("/api/tickets");
-      return response.json() as Promise<Ticket[]>;
+      try {
+        const response = await apiRequest("/api/tickets");
+        const data = await response.json();
+        return data as Ticket[];
+      } catch (err) {
+        console.error("Failed to fetch tickets:", err);
+        throw err;
+      }
     },
+    retry: 3,
+    retryDelay: 1000,
   });
 
   // Filter tickets based on search and filters

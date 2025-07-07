@@ -55,18 +55,34 @@ export function TicketChat({ ticketId, onClose }: TicketChatProps) {
   const { data: ticket, isLoading: ticketLoading } = useQuery({
     queryKey: ["/api/tickets", ticketId],
     queryFn: async () => {
-      const response = await apiRequest(`/api/tickets/${ticketId}`);
-      return response.json() as Promise<Ticket>;
+      try {
+        const response = await apiRequest(`/api/tickets/${ticketId}`);
+        const data = await response.json();
+        return data as Ticket;
+      } catch (err) {
+        console.error("Failed to fetch ticket:", err);
+        throw err;
+      }
     },
+    retry: 3,
+    retryDelay: 1000,
   });
 
   // Fetch chat messages
   const { data: messages = [], isLoading: messagesLoading } = useQuery({
     queryKey: ["/api/tickets", ticketId, "messages"],
     queryFn: async () => {
-      const response = await apiRequest(`/api/tickets/${ticketId}/messages`);
-      return response.json() as Promise<ChatMessage[]>;
+      try {
+        const response = await apiRequest(`/api/tickets/${ticketId}/messages`);
+        const data = await response.json();
+        return data as ChatMessage[];
+      } catch (err) {
+        console.error("Failed to fetch messages:", err);
+        throw err;
+      }
     },
+    retry: 3,
+    retryDelay: 1000,
   });
 
   // Send message mutation
@@ -101,10 +117,16 @@ export function TicketChat({ ticketId, onClose }: TicketChatProps) {
   // Get AI suggestions mutation
   const getSuggestionsMutation = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest(`/api/tickets/${ticketId}/suggestions`, {
-        method: "POST",
-      });
-      return response.json() as Promise<{ suggestions: string[] }>;
+      try {
+        const response = await apiRequest(`/api/tickets/${ticketId}/suggestions`, {
+          method: "POST",
+        });
+        const data = await response.json();
+        return data as { suggestions: string[] };
+      } catch (err) {
+        console.error("Failed to get AI suggestions:", err);
+        throw err;
+      }
     },
     onSuccess: (data) => {
       setSuggestions(data.suggestions);
