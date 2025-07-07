@@ -1,4 +1,4 @@
-import { users, activities, type User, type InsertUser, type UpdateUser, type Activity, type InsertActivity } from "@shared/schema";
+import { users, activities, tickets, chatMessages, type User, type InsertUser, type UpdateUser, type Activity, type InsertActivity, type Ticket, type InsertTicket, type ChatMessage, type InsertChatMessage } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, count, and } from "drizzle-orm";
 
@@ -13,6 +13,16 @@ export interface IStorage {
   // Activity operations
   getUserActivities(userId: number, page: number, limit: number): Promise<{ activities: Activity[], total: number }>;
   createActivity(activity: InsertActivity): Promise<Activity>;
+  
+  // Ticket operations
+  getTickets(): Promise<Ticket[]>;
+  getTicket(id: number): Promise<Ticket | undefined>;
+  createTicket(ticket: InsertTicket): Promise<Ticket>;
+  updateTicket(id: number, updates: Partial<Ticket>): Promise<Ticket | undefined>;
+  
+  // Chat message operations
+  getChatMessages(ticketId: number): Promise<ChatMessage[]>;
+  createChatMessage(message: InsertChatMessage): Promise<ChatMessage>;
 }
 
 export class MemStorage implements IStorage {
@@ -144,6 +154,32 @@ export class MemStorage implements IStorage {
     this.activities.set(id, newActivity);
     return newActivity;
   }
+
+  // Ticket operations - stub implementations for MemStorage
+  async getTickets(): Promise<Ticket[]> {
+    return [];
+  }
+
+  async getTicket(id: number): Promise<Ticket | undefined> {
+    return undefined;
+  }
+
+  async createTicket(ticket: InsertTicket): Promise<Ticket> {
+    throw new Error("MemStorage does not support tickets. Use DatabaseStorage instead.");
+  }
+
+  async updateTicket(id: number, updates: Partial<Ticket>): Promise<Ticket | undefined> {
+    return undefined;
+  }
+
+  // Chat message operations - stub implementations for MemStorage
+  async getChatMessages(ticketId: number): Promise<ChatMessage[]> {
+    return [];
+  }
+
+  async createChatMessage(message: InsertChatMessage): Promise<ChatMessage> {
+    throw new Error("MemStorage does not support chat messages. Use DatabaseStorage instead.");
+  }
 }
 
 // DatabaseStorage implementation
@@ -214,6 +250,48 @@ export class DatabaseStorage implements IStorage {
       .values(activity)
       .returning();
     return newActivity;
+  }
+
+  async getTickets(): Promise<Ticket[]> {
+    return await db.select().from(tickets).orderBy(desc(tickets.createdAt));
+  }
+
+  async getTicket(id: number): Promise<Ticket | undefined> {
+    const [ticket] = await db.select().from(tickets).where(eq(tickets.id, id));
+    return ticket || undefined;
+  }
+
+  async createTicket(ticket: InsertTicket): Promise<Ticket> {
+    const [newTicket] = await db
+      .insert(tickets)
+      .values(ticket)
+      .returning();
+    return newTicket;
+  }
+
+  async updateTicket(id: number, updates: Partial<Ticket>): Promise<Ticket | undefined> {
+    const [ticket] = await db
+      .update(tickets)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(tickets.id, id))
+      .returning();
+    return ticket || undefined;
+  }
+
+  async getChatMessages(ticketId: number): Promise<ChatMessage[]> {
+    return await db
+      .select()
+      .from(chatMessages)
+      .where(eq(chatMessages.ticketId, ticketId))
+      .orderBy(chatMessages.createdAt);
+  }
+
+  async createChatMessage(message: InsertChatMessage): Promise<ChatMessage> {
+    const [newMessage] = await db
+      .insert(chatMessages)
+      .values(message)
+      .returning();
+    return newMessage;
   }
 }
 

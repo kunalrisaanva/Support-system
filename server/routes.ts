@@ -1,8 +1,9 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { updateUserSchema, updatePasswordSchema } from "@shared/schema";
+import { updateUserSchema, updatePasswordSchema, insertTicketSchema, insertChatMessageSchema } from "@shared/schema";
 import { z } from "zod";
+import { generateChatSuggestions } from "./openai";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Get current user (using hardcoded ID for demo)
@@ -96,6 +97,92 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(result);
     } catch (error) {
       res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Ticket routes
+  app.get("/api/tickets", async (req, res) => {
+    try {
+      const tickets = await storage.getTickets();
+      res.json(tickets);
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.get("/api/tickets/:id", async (req, res) => {
+    try {
+      const ticketId = parseInt(req.params.id);
+      const ticket = await storage.getTicket(ticketId);
+      if (!ticket) {
+        return res.status(404).json({ message: "Ticket not found" });
+      }
+      res.json(ticket);
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/tickets", async (req, res) => {
+    try {
+      const validatedData = insertTicketSchema.parse(req.body);
+      const ticket = await storage.createTicket(validatedData);
+      res.status(201).json(ticket);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Validation error", errors: error.errors });
+      }
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Chat message routes
+  app.get("/api/tickets/:id/messages", async (req, res) => {
+    try {
+      const ticketId = parseInt(req.params.id);
+      const messages = await storage.getChatMessages(ticketId);
+      res.json(messages);
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/tickets/:id/messages", async (req, res) => {
+    try {
+      const ticketId = parseInt(req.params.id);
+      const validatedData = insertChatMessageSchema.parse({
+        ...req.body,
+        ticketId
+      });
+      const message = await storage.createChatMessage(validatedData);
+      res.status(201).json(message);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Validation error", errors: error.errors });
+      }
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // AI suggestions route
+  app.post("/api/tickets/:id/suggestions", async (req, res) => {
+    try {
+      const ticketId = parseInt(req.params.id);
+      const ticket = await storage.getTicket(ticketId);
+      if (!ticket) {
+        return res.status(404).json({ message: "Ticket not found" });
+      }
+
+      const messages = await storage.getChatMessages(ticketId);
+      const suggestions = await generateChatSuggestions(messages, {
+        title: ticket.title,
+        description: ticket.description,
+        priority: ticket.priority
+      });
+
+      res.json({ suggestions });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to generate suggestions" });
     }
   });
 
