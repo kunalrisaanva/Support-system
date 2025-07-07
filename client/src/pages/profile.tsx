@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { Header } from "@/components/layout/header";
 import { Button } from "@/components/ui/button";
@@ -125,16 +125,18 @@ export default function Profile() {
   });
 
   // Update form defaults when user data loads
-  if (user && !profileForm.formState.isDirty) {
-    profileForm.reset({
-      fullName: user.fullName,
-      email: user.email,
-      role: user.role,
-      department: user.department,
-      language: user.language,
-      emailNotifications: user.emailNotifications,
-    });
-  }
+  useEffect(() => {
+    if (user) {
+      profileForm.reset({
+        fullName: user.fullName,
+        email: user.email,
+        role: user.role,
+        department: user.department,
+        language: user.language,
+        emailNotifications: user.emailNotifications,
+      });
+    }
+  }, [user]);
 
   const onProfileSubmit = (data: ProfileUpdateData) => {
     profileMutation.mutate(data);

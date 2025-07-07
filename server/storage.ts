@@ -73,8 +73,16 @@ export class MemStorage implements IStorage {
     const id = this.currentUserId++;
     const now = new Date();
     const user: User = {
-      ...insertUser,
       id,
+      fullName: insertUser.fullName,
+      email: insertUser.email,
+      password: insertUser.password,
+      role: insertUser.role || "support-agent",
+      department: insertUser.department || "customer-support",
+      avatar: insertUser.avatar || null,
+      darkMode: insertUser.darkMode || false,
+      language: insertUser.language || "en",
+      emailNotifications: insertUser.emailNotifications || true,
       createdAt: now,
       updatedAt: now,
     };
@@ -124,8 +132,11 @@ export class MemStorage implements IStorage {
     const id = this.currentActivityId++;
     const now = new Date();
     const newActivity: Activity = {
-      ...activity,
       id,
+      userId: activity.userId || null,
+      type: activity.type,
+      title: activity.title,
+      description: activity.description || null,
       createdAt: now,
     };
     this.activities.set(id, newActivity);
