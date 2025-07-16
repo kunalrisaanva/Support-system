@@ -8,8 +8,9 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Link, useLocation } from "wouter";
-import { HelpCircle, Eye, EyeOff } from "lucide-react";
+import { HelpCircle, Eye, EyeOff, ImageOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { AuthContextType } from "../../types/types";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -19,11 +20,14 @@ const loginSchema = z.object({
 
 type LoginData = z.infer<typeof loginSchema>;
 
-export default function Login() {
+export default function Login({ auth }: { auth: AuthContextType }) {
   const [showPassword, setShowPassword] = useState(false);
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
+  // const [location, navigate] = useLocation();
   const { toast } = useToast();
   
+  // const navigate = useNavigate();
+
   const form = useForm<LoginData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -47,7 +51,10 @@ export default function Login() {
         localStorage.setItem("userEmail", data.email);
         
         // Navigate to dashboard
+        // setLocation("/");
+        auth.login()
         setLocation("/");
+        console.log("ruuu");
       } else {
         toast({
           title: "Login failed",

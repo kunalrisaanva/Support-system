@@ -5,9 +5,8 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/ui/theme-provider";
-import { Button } from "@/components/ui/button";
-import { Sidebar } from "@/components/layout/sidebar";
 import { Menu, HelpCircle } from "lucide-react";
+import { Sidebar } from "@/components/layout/sidebar";
 import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/dashboard";
 import Tickets from "@/pages/tickets";
@@ -17,55 +16,52 @@ import Profile from "@/pages/profile";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
 import ForgotPassword from "@/pages/forgot-password";
+import { AuthContextType } from "../types/types"; // 👈 import type
 
-function useAuth() {
+// 🔐 Auth hook
+function useAuthProvider(): AuthContextType {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const checkAuth = () => {
-      const authStatus = localStorage.getItem("isAuthenticated");
-      setIsAuthenticated(authStatus === "true");
-      setIsLoading(false);
-    };
-    
-    checkAuth();
+    const authStatus = localStorage.getItem("isAuthenticated");
+    setIsAuthenticated(authStatus === "true");
+    setIsLoading(false);
   }, []);
+
+  const login = () => {
+    localStorage.setItem("isAuthenticated", "true");
+    setIsAuthenticated(true);
+  };
 
   const logout = () => {
     localStorage.removeItem("isAuthenticated");
     localStorage.removeItem("userEmail");
     setIsAuthenticated(false);
+    window.location.href = "/login";
   };
 
-  return { isAuthenticated, isLoading, logout };
+  return { isAuthenticated, isLoading, login, logout };
 }
 
-function AuthenticatedLayout() {
-  const { logout } = useAuth();
+//  Authenticated layout
+function AuthenticatedLayout({ auth }: { auth: AuthContextType }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-  const toggleMobileMenu = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen);
-  };
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
-      <Sidebar 
-        onLogout={logout} 
+      <Sidebar
+        onLogout={auth.logout}
         isMobileOpen={isMobileMenuOpen}
-        onMobileToggle={toggleMobileMenu}
+        onMobileToggle={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
       />
-      
-      {/* Main Content Area */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Mobile Header */}
         <header className="lg:hidden bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <button
                 className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
-                onClick={toggleMobileMenu}
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               >
                 <Menu className="w-5 h-5" />
               </button>
@@ -79,7 +75,6 @@ function AuthenticatedLayout() {
           </div>
         </header>
 
-        {/* Page Content */}
         <main className="flex-1 overflow-auto">
           <Switch>
             <Route path="/" component={Dashboard} />
@@ -95,22 +90,40 @@ function AuthenticatedLayout() {
   );
 }
 
-function PublicLayout() {
+// Public layout
+function PublicLayout({ auth }: { auth: AuthContextType }) {
   return (
     <Switch>
-      <Route path="/login" component={Login} />
-      <Route path="/register" component={Register} />
-      <Route path="/forgot-password" component={ForgotPassword} />
-      <Route component={Login} />
+      <Route path="/login">
+        <Login auth={auth} />
+      </Route>
+      <Route path="/register">
+        <Register />
+      </Route>
+      <Route path="/forgot-password">
+        <ForgotPassword />
+      </Route>
+      <Route>
+        <Login auth={auth} />
+      </Route>
     </Switch>
   );
 }
 
-function AppContent() {
-  const { isAuthenticated, isLoading } = useAuth();
+//  AppContent handles routing based on auth
+function AppContent({ auth }: { auth: AuthContextType }) {
+  const { isAuthenticated, isLoading } = auth;
   const [location, setLocation] = useLocation();
 
-  // Show loading screen while checking authentication
+  const publicRoutes = ["/login", "/register", "/forgot-password"];
+  const isPublicRoute = publicRoutes.includes(location);
+
+  useEffect(() => {
+    if (isAuthenticated && isPublicRoute) {
+      setLocation("/");
+    }
+  }, [isAuthenticated, isPublicRoute, setLocation]);
+
   if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center bg-gray-50 dark:bg-gray-900">
@@ -124,31 +137,21 @@ function AppContent() {
     );
   }
 
-  // Public routes that don't require authentication
-  const publicRoutes = ["/login", "/register", "/forgot-password"];
-  const isPublicRoute = publicRoutes.includes(location);
+  if (!isAuthenticated && !isPublicRoute) return <PublicLayout auth={auth} />;
+  if (isAuthenticated && isPublicRoute) return null;
 
-  // If not authenticated and trying to access private route, redirect to login
-  if (!isAuthenticated && !isPublicRoute) {
-    return <PublicLayout />;
-  }
-
-  // If authenticated and trying to access public route, redirect to dashboard
-  if (isAuthenticated && isPublicRoute) {
-    setLocation("/");
-    return null;
-  }
-
-  // Render appropriate layout based on authentication
-  return isAuthenticated ? <AuthenticatedLayout /> : <PublicLayout />;
+  return isAuthenticated ? <AuthenticatedLayout auth={auth} /> : <PublicLayout auth={auth} />;
 }
 
+// ✅ Root App
 function App() {
+  const auth = useAuthProvider();
+
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider defaultTheme="light">
         <TooltipProvider>
-          <AppContent />
+          <AppContent auth={auth} />
           <Toaster />
         </TooltipProvider>
       </ThemeProvider>
